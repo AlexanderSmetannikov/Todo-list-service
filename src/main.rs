@@ -33,9 +33,9 @@ async fn main() -> Result<()> {
 
 #[derive(Serialize, Deserialize)]
 struct Todo {
-    id: i64,
-    description: String, 
-    done: bool,
+    task_id: i64,
+    description: Option<String>, 
+    done: Option<bool>,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -43,22 +43,41 @@ struct NewTodo {
     description: String, 
 }
 
+#[derive(Serialize, Deserialize)]
+struct User {
+    username: String, 
+    password: String,
+}
+
+#[derive(Serialize, Deserialize)]
+struct Shared {
+    id: i64, 
+    task_id: i64,
+}
+
 async fn list(State(pool): State<SqlitePool>) -> Result<Json<Vec<Todo>>> {
-    let todos = sqlx::query_as!(Todo, "SELECT id, description, done FROM todos ORDER BY id").fetch_all(&pool).await?;
+    let todos = sqlx::query_as!(
+        Todo,
+        "SELECT task_id, description, done FROM tasks ORDER BY task_id"
+    )
+    .fetch_all(&pool)
+    .await?;
+
     Ok(Json(todos))
 }
 
+
 async fn create(State(pool): State<SqlitePool>, Form(todo): Form<NewTodo>) -> Result<Redirect> {
-    sqlx::query!("INSERT INTO todos (description) VALUES (?)", todo.description).execute(&pool).await?;
+    sqlx::query!("INSERT INTO tasks (description) VALUES (?)", todo.description).execute(&pool).await?;
     Ok(Redirect::to("http://localhost:5173"))
 }
 
 async fn delete(State(pool): State<SqlitePool>, Path(id): Path<i64>) -> Result<Redirect> {
-    sqlx::query!("DELETE FROM todos where id = ?", id).execute(&pool).await?;
+    sqlx::query!("DELETE FROM tasks WHERE task_id = ?", id).execute(&pool).await?;
     Ok(Redirect::to("http://localhost:5173"))
 }
 
 async fn update(State(pool): State<SqlitePool>, Form(todo): Form<Todo>) -> Result<Redirect> {
-    sqlx::query!("UPDATE todos SET description = ?, done = ? WHERE id = ?", todo.description, todo.done, todo.id).execute(&pool).await?;
+    sqlx::query!("UPDATE tasks SET description = ?, done = ? WHERE task_id = ?", todo.description, todo.done, todo.task_id).execute(&pool).await?;
     Ok(Redirect::to("http://localhost:5173"))
 }

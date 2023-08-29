@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <title>Список задач</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f0f0f0;
+            color: #333;
+        }
+
+        h1,
+        h2 {
+            text-align: center;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #fff;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        li {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px;
+            border-bottom: 1px solid #ddd;
+        }
+
+        button {
+            cursor: pointer;
+            background-color: #007bff;
+            border: none;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 3px;
+        }
+
+        input[type="checkbox"] {
+            margin-right: 10px;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Задачи</h1>
+
+    <div class="container">
+        <h2>Список ваших задач</h2>
+        <ul id="todo-list"></ul>
+
+        <h2>Создать задачу</h2>
+        <form id="create-form">
+            <input type="text" id="description" placeholder="Опишите задачу" required>
+            <button type="submit">Создать</button>
+        </form>
+    </div>
+
+    <script>
+        const baseUrl = "http://localhost:8000";
+
+        async function fetchTodos() {
+            const response = await fetch(`${baseUrl}/`);
+            const todos = await response.json();
+            const todoList = document.getElementById("todo-list");
+
+            todoList.innerHTML = "";
+            todos.forEach(todo => {
+                const li = document.createElement("li");
+
+                const checkbox = document.createElement("input");
+                checkbox.type = "checkbox";
+                checkbox.checked = todo.done || false;
+                checkbox.addEventListener("change", async () => {
+                    await updateTodo(todo.task_id, todo.description, checkbox.checked);
+                    fetchTodos();
+                });
+
+                const updateButton = document.createElement("button");
+                updateButton.textContent = "Обновить";
+                updateButton.addEventListener("click", async () => {
+                    const newDescription = prompt("Enter updated description:", todo.description);
+                    if (newDescription !== null) {
+                        await updateTodo(todo.task_id, newDescription, checkbox.checked);
+                        fetchTodos();
+                    }
+                });
+
+                const deleteButton = document.createElement("button");
+                deleteButton.textContent = "Удалить";
+                deleteButton.addEventListener("click", async () => {
+                    await deleteTodo(todo.task_id);
+                    fetchTodos();
+                });
+
+                li.appendChild(checkbox);
+                li.appendChild(document.createTextNode(todo.description));
+                // li.appendChild(updateButton);
+                li.appendChild(deleteButton);
+
+                todoList.appendChild(li);
+            });
+        }
+
+        async function createTodo(description) {
+            await fetch(`${baseUrl}/create`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/x-www-form-urlencoded"
+                },
+                body: `description=${description}`
+            });
+            fetchTodos();
+        }
+
+        async function updateTodo(id, description, done) {
+            await fetch(`${baseUrl}/update`, {
+                method: "GET",
+                headers: {
+                    "Content-Type": "application/x-www-form-urlencoded"
+                },
+                body: `id=${id}&description=${description}&done=${done}`
+            });
+        }
+
+        async function deleteTodo(id) {
+            await fetch(`${baseUrl}/delete/${id}`, {
+                method: "POST"
+            });
+        }
+
+        document.getElementById("create-form").addEventListener("submit", async function (event) {
+            event.preventDefault();
+            const description = document.getElementById("description").value;
+            await createTodo(description);
+            document.getElementById("description").value = "";
+        });
+
+        fetchTodos();
+    </script>
+</body>
+
+</html>
