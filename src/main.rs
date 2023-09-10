@@ -66,6 +66,26 @@ async fn list(State(pool): State<SqlitePool>) -> Result<Json<Vec<Todo>>> {
     Ok(Json(todos))
 }
 
+async fn create_user(State(pool): State<SqlitePool>, Form(user): Form<User>) -> Result<()> {
+    sqlx::query!("INSERT INTO users (username, password) VALUES (?, ?)", user.username, user.password).execute(&pool).await?;
+    Ok(())
+}
+
+// async fn authenticate_user(State(pool): State<SqlitePool>, Form(credentials): Form<User>) -> Result<Json<bool>> {
+//     let user = sqlx::query!(
+//         r#"SELECT * FROM users WHERE username = ? AND password = ?"#,
+//         credentials.username,
+//         credentials.password
+//     )
+//     .fetch_optional(&pool)
+//     .await?;
+
+//     let is_valid = user.is_some();
+
+//     Ok(Json(is_valid))
+// }
+
+
 
 async fn create(State(pool): State<SqlitePool>, Form(todo): Form<NewTodo>) -> Result<Redirect> {
     sqlx::query!("INSERT INTO tasks (description) VALUES (?)", todo.description).execute(&pool).await?;

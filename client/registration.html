@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>User Registration</title>
+</head>
+
+<body>
+  <h1>User Registration</h1>
+
+  <form id="registration-form">
+    <label for="username">Username:</label>
+    <input type="text" id="username" name="username" required>
+    <br>
+    <label for="password">Password:</label>
+    <input type="password" id="password" name="password" required>
+    <br>
+    <button type="submit">Register</button>
+  </form>
+
+  <script>
+    const baseUrl = "http://localhost:8000";
+
+    document.getElementById("registration-form").addEventListener("submit", async function (event) {
+      event.preventDefault();
+
+      const username = document.getElementById("username").value;
+      const password = document.getElementById("password").value;
+
+      const formData = new FormData();
+      formData.append("username", username);
+      formData.append("password", password);
+
+      const response = await fetch(`${baseUrl}/create_user`, {
+        method: "POST",
+        body: formData
+      });
+
+      if (response.ok) {
+        alert("Registration successful!");
+        window.location.href = "/login.html"; // Redirect to login page
+      } else {
+        alert("Registration failed. Please try again.");
+      }
+    });
+  </script>
+</body>
+
+</html>
